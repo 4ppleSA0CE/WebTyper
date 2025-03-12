@@ -234,9 +234,3 @@ function cleanup() {
     overlay.parentNode.removeChild(overlay);
   }
 }
-
-function resetStats() {
-  chrome.storage.local.set({ typingStats: { games: [] } }, () => {
-    console.log('Statistics have been reset');
-  });
-} 

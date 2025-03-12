@@ -85,6 +85,7 @@ function updateStatsDisplay(stats) {
 document.getElementById('resetStats').addEventListener('click', () => {
   chrome.storage.local.set({ typingStats: { games: [] } }, () => {
     console.log('Statistics have been reset');
-    // Optionally refresh your stats display in the popup
+    // Refresh the stats display
+    updateStatsDisplay({ games: [] });
   });
 }); 
