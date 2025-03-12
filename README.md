@@ -1,6 +1,6 @@
  # WebTyper - Browser Extension
 
-A Microsoft Edge extension that turns any webpage into a typing practice game. Practice your typing skills while reading web content, track your WPM (Words Per Minute), and monitor your progress over time.
+A Microsoft Edge extension that turns any webpage into a typing practice game. Practice your typing skills while reading web content, track your WPM, and monitor your progress over time.
 
 ## Installation
 
