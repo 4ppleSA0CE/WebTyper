@@ -7,6 +7,15 @@ let accuracy = 0;
 let mistakes = 0;
 let startTime;
 
+function resetGameState() {
+  gameActive = false;
+  currentIndex = 0;
+  gameText = '';
+  accuracy = 0;
+  mistakes = 0;
+  startTime = null;
+}
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "startGame") {
     if (!gameActive) {
@@ -23,6 +32,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function startGame() {
+  resetGameState();
+  
   gameActive = true;
   startTime = Date.now();
   
@@ -37,7 +48,7 @@ function startGame() {
     .join(' ')
     .replace(/\s+/g, ' ');
   
-  // Filter out special characters, keeping only alphanumeric, spaces, and basic punctuation
+  // Filter out special characters
   gameText = visibleText.trim()
     .replace(/[^a-zA-Z0-9\s.,!?'-]/g, '')
     .replace(/\s+/g, ' ');
@@ -148,6 +159,8 @@ function calculateWPM() {
 
 function updateStats() {
   const wpm = calculateWPM();
+  accuracy = Math.max(0, ((currentIndex - mistakes) / currentIndex * 100).toFixed(1));
+  
   document.getElementById('wpm').textContent = wpm;
   document.getElementById('accuracy').textContent = accuracy;
   document.getElementById('mistakes').textContent = mistakes;
@@ -172,6 +185,7 @@ function stopGame() {
   });
 
   cleanup();
+  resetGameState();
 }
 
 function handleKeyPress(e) {
@@ -184,31 +198,30 @@ function handleKeyPress(e) {
     return;
   }
   
-  // Ignore standalone Shift key presses
   if (e.key === 'Shift') {
     return;
   }
   
-  // Compare the typed character with the expected character, ignoring case if Shift is pressed
   const expectedChar = gameText[currentIndex];
-  const isCorrect = e.shiftKey ? 
-    e.key.toLowerCase() === expectedChar.toLowerCase() :
-    e.key === expectedChar;
+  let typedChar = e.key;
+  
+  // If shift is pressed, force uppercase
+  if (e.shiftKey && typedChar.length === 1) {
+    typedChar = typedChar.toUpperCase();
+  } else if (!e.shiftKey && typedChar.length === 1) {
+    typedChar = typedChar.toLowerCase();
+  }
+  
+  const isCorrect = typedChar === expectedChar;
   
   if (isCorrect) {
     currentIndex++;
     updateDisplay();
-    
-    if (currentIndex % 5 === 0) {
-      accuracy = ((currentIndex - mistakes) / currentIndex * 100).toFixed(1);
-      updateStats();
-    }
+    accuracy = ((currentIndex - mistakes) / currentIndex * 100).toFixed(1);
   } else {
     mistakes++;
-    if (currentIndex % 5 === 0) {
-      updateStats();
-    }
   }
+  updateStats();
   
   if (currentIndex >= gameText.length) {
     stopGame();
@@ -220,4 +233,10 @@ function cleanup() {
   if (overlay && overlay.parentNode) {
     overlay.parentNode.removeChild(overlay);
   }
+}
+
+function resetStats() {
+  chrome.storage.local.set({ typingStats: { games: [] } }, () => {
+    console.log('Statistics have been reset');
+  });
 } 

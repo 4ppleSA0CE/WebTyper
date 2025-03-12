@@ -80,4 +80,11 @@ function updateStatsDisplay(stats) {
   document.getElementById('overallWPM').textContent = overallWPM;
   document.getElementById('overallAccuracy').textContent = `${overallAccuracy}%`;
   document.getElementById('totalGames').textContent = games.length;
-} 
+}
+
+document.getElementById('resetStats').addEventListener('click', () => {
+  chrome.storage.local.set({ typingStats: { games: [] } }, () => {
+    console.log('Statistics have been reset');
+    // Optionally refresh your stats display in the popup
+  });
+}); 
