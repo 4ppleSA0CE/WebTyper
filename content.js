@@ -6,6 +6,8 @@ let textDisplay;
 let accuracy = 0;
 let mistakes = 0;
 let startTime;
+let statsInterval;
+let hasStarted = false;
 
 function resetGameState() {
   gameActive = false;
@@ -14,6 +16,11 @@ function resetGameState() {
   accuracy = 0;
   mistakes = 0;
   startTime = null;
+  hasStarted = false;
+  if (statsInterval) {
+    clearInterval(statsInterval);
+    statsInterval = null;
+  }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
@@ -35,7 +42,6 @@ function startGame() {
   resetGameState();
   
   gameActive = true;
-  startTime = Date.now();
   
   const visibleText = Array.from(document.querySelectorAll('p, h1, h2, h3, h4, h5, h6, article'))
     .filter(element => {
@@ -130,7 +136,6 @@ function startGame() {
   document.body.appendChild(overlay);
   
   updateDisplay();
-  
   document.addEventListener('keydown', handleKeyPress);
 }
 
@@ -202,6 +207,18 @@ function handleKeyPress(e) {
     return;
   }
   
+  if (!hasStarted) {
+    hasStarted = true;
+    startTime = Date.now();
+    statsInterval = setInterval(() => {
+      if (gameActive) {
+        updateStats();
+      } else {
+        clearInterval(statsInterval);
+      }
+    }, 1000);
+  }
+  
   const expectedChar = gameText[currentIndex];
   let typedChar = e.key;
   
@@ -217,11 +234,10 @@ function handleKeyPress(e) {
   if (isCorrect) {
     currentIndex++;
     updateDisplay();
-    accuracy = ((currentIndex - mistakes) / currentIndex * 100).toFixed(1);
   } else {
     mistakes++;
   }
-  updateStats();
+  document.getElementById('mistakes').textContent = mistakes;
   
   if (currentIndex >= gameText.length) {
     stopGame();
@@ -234,3 +250,8 @@ function cleanup() {
     overlay.parentNode.removeChild(overlay);
   }
 }
+function resetStats() {
+  chrome.storage.local.set({ typingStats: { games: [] } }, () => {
+    console.log('Statistics have been reset');
+  });
+} 
