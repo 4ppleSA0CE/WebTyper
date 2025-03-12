@@ -37,10 +37,13 @@ function startGame() {
     .join(' ')
     .replace(/\s+/g, ' ');
   
-  gameText = visibleText.trim();
+  // Filter out special characters, keeping only alphanumeric, spaces, and basic punctuation
+  gameText = visibleText.trim()
+    .replace(/[^a-zA-Z0-9\s.,!?'-]/g, '')
+    .replace(/\s+/g, ' ');
   
   if (!gameText) {
-    throw new Error('No visible text found on this page');
+    throw new Error('No valid text found on this page');
   }
   
   // Create overlay
@@ -181,11 +184,21 @@ function handleKeyPress(e) {
     return;
   }
   
-  if (e.key === gameText[currentIndex]) {
+  // Ignore standalone Shift key presses
+  if (e.key === 'Shift') {
+    return;
+  }
+  
+  // Compare the typed character with the expected character, ignoring case if Shift is pressed
+  const expectedChar = gameText[currentIndex];
+  const isCorrect = e.shiftKey ? 
+    e.key.toLowerCase() === expectedChar.toLowerCase() :
+    e.key === expectedChar;
+  
+  if (isCorrect) {
     currentIndex++;
     updateDisplay();
     
-    //delay stats update
     if (currentIndex % 5 === 0) {
       accuracy = ((currentIndex - mistakes) / currentIndex * 100).toFixed(1);
       updateStats();
